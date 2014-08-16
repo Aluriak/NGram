@@ -24,7 +24,7 @@ def getNByN(n, text):
     assert(n > 0)
     assert(len(text) >= n)
     index = n
-    while index < len(text):
+    while index <= len(text):
         yield text[index-n:index]
         index += 1
     return 
@@ -41,7 +41,7 @@ class NGram(object):
 # CONSTRUCTOR #################################################################
     def __init__(self, n, text = None):
         """
-        n: number used for prediction (positiv and non-null integer)
+        n: number used for prediction (integer > 1)
         text: string used for learning, can be None
         """
         self.n = n
@@ -77,14 +77,21 @@ class NGram(object):
             # NB: sum of frequencies for each key of self.probs must be equal to 1
 
 
-    def generate(self, q):
+    def generate(self, q, start = None):
         """
         q: quantity of n-uplet to generate
         Return: string of q n-uplet, according to probs
         """
-        ret = self.randomAccessToUplet()[:-1]
+        if isinstance(start, str): start = tuple(start)
+        if start is None or len(start) < self.n:
+            ret = self.randomAccessToUplet()[:-1]
+        else:   ret = start
         for i in range(q):
-            ret += self.getRandomLetterAfter(ret[-self.n+1:])
+            tmp = self.getRandomLetterAfter(ret[-self.n+1:])
+            if tmp == "":       
+                ret += self.randomAccessToUplet()[:-1]
+            else:               ret += (tmp,)
+            #print(str(tmp) + ">>>>" + str(ret[-self.n+1:]) + "<<<<")
             
         return ret
             
@@ -96,14 +103,14 @@ class NGram(object):
     def getRandomLetterAfter(self, muplet):
         """
         muplet: string of n-1 letters
-        Return: a random letter, randomly choosen in possible successor of muplet, or None if unknow muplet
+        Return: a random letter, randomly choosen in possible successor of muplet, or "" if unknow muplet
         """
         assert(len(muplet) == self.n - 1)
         succs = self.probs.get(muplet, None)
         if succs is None:
-            return None
+            return ""
         else:
-            return NGram.randomKeyInFrequencyDict(succs, 1000)
+            return NGram.randomKeyInFrequencyDict(succs, 100000)
 
 
     def randomAccessToUplet(self):
@@ -114,20 +121,23 @@ class NGram(object):
     
 
     @staticmethod
-    def randomKeyInFrequencyDict(d, offset = 1):
+    def randomKeyInFrequencyDict(d, coeff = 1):
         """
         d: dict with number as values
-        offset: multiply all freqs by offset for treatment; useful for floats freqs (default is 1)
+        coeff: multiply all freqs by coeff for treatment; useful for floats freqs (default is 1)
         Return: a key of d, randomly choosen according to frequency
         """
-        total_freqs = sum([freq * offset for freq in d.values()])
+        total_freqs = sum([freq * coeff for freq in d.values()])
         counter = randint(1, int(total_freqs))
+        ret_key = None
         for key, freq in d.items():
-            counter -= freq * offset
+            counter -= freq * coeff
             if counter <= 0:
                 ret_key = key
                 break
         return ret_key
+
+
 # CONVERSION ##################################################################
 # OPERATORS ###################################################################
 
@@ -138,14 +148,19 @@ class NGram(object):
 # FUNCTIONS             #
 #########################
 if __name__ == "__main__":
-    with open("main.py", "r") as f:
-    #with open("filin", "r") as f:
-        txt = f.read()
-    g = NGram(8, txt)
-    print(g.freqs)
-    print(g.probs)
+    #with open("main.py", "r") as f:
+    with open("filin", "r") as f:
+        txt = tuple(f.read())
+    g = NGram(12, txt)
+    #print(g.freqs)
+    #print(g.probs)
     print("\nGenerated text :\n")
-    print(g.generate(1000))
-    pass
+    print("".join(g.generate(10000)))
+
+    #with open("filin", "r") as f:
+        #txt = tuple(f.read().split())
+    #g = NGram(6, txt)
+    #print("\nGenerated text :\n")
+    #print(" ".join(g.generate(1000)))
 
 
