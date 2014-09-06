@@ -62,8 +62,6 @@ class NGram(object):
         for uplet in self.freqs.keys():
             first = uplet[:-1]
             self.firsts_freqs[first] = self.freqs[uplet] + self.firsts_freqs.get(first, 0)
-        # add these frequency to self table of freqs
-        #self.freqs.update(firsts_freqs)
 
         # compute probs of apparition
         self.probs = {}
@@ -71,7 +69,6 @@ class NGram(object):
             first = uplet[:-1]
             last  = uplet[-1]
             # probability of last given first
-            #self.probs[last, first] = self.freqs[uplet] / self.firsts_freqs[first]
             d = self.probs.setdefault(first, {})
             d[last] = self.freqs[uplet] / self.firsts_freqs[first]
             # NB: sum of frequencies for each key of self.probs must be equal to 1
@@ -80,7 +77,7 @@ class NGram(object):
     def generate(self, q, start = None):
         """
         q: quantity of n-uplet to generate
-        Return: string of q n-uplet, according to probs
+        Return: tuple of strings of q n-uplet, according to probs
         """
         if isinstance(start, str): start = tuple(start)
         if start is None or len(start) < self.n:
@@ -90,8 +87,10 @@ class NGram(object):
             tmp = self.getRandomLetterAfter(ret[-self.n+1:])
             if tmp == "":       
                 ret += self.randomAccessToUplet()[:-1]
-            else:               ret += (tmp,)
-            #print(str(tmp) + ">>>>" + str(ret[-self.n+1:]) + "<<<<")
+            elif isinstance(ret, str):               
+                ret += tmp
+            else:
+                ret += (tmp,)
             
         return ret
             
@@ -121,10 +120,10 @@ class NGram(object):
     
 
     @staticmethod
-    def randomKeyInFrequencyDict(d, coeff = 1):
+    def randomKeyInFrequencyDict(d, coeff = 1000):
         """
         d: dict with number as values
-        coeff: multiply all freqs by coeff for treatment; useful for floats freqs (default is 1)
+        coeff: multiply all freqs by coeff for treatment; useful for floats freqs (default is 1000)
         Return: a key of d, randomly choosen according to frequency
         """
         total_freqs = sum([freq * coeff for freq in d.values()])
@@ -149,14 +148,18 @@ class NGram(object):
 #########################
 if __name__ == "__main__":
     #with open("main.py", "r") as f:
+        
+    # state == letter
     with open("filin", "r") as f:
-        txt = tuple(f.read())
-    g = NGram(12, txt)
+        #txt = tuple(f.read())
+        txt = f.read()
+    g = NGram(6, txt)
     #print(g.freqs)
     #print(g.probs)
     print("\nGenerated text :\n")
     print("".join(g.generate(10000)))
 
+    # state == word
     #with open("filin", "r") as f:
         #txt = tuple(f.read().split())
     #g = NGram(6, txt)
