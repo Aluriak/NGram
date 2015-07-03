@@ -73,7 +73,6 @@ class NKGram(object):
             previous = slide[0:self.n]
             lexem    = slide[self.n]
             nexts    = slide[self.n+1:]
-            # print(previous, lexem, nexts, sep='·')
             assert(isinstance(previous, tuple) and isinstance(nexts, tuple))
             self.model[previous, nexts][lexem] += 1
         return self
@@ -115,7 +114,6 @@ class NKGram(object):
         counts, candidates = itertools.tee(candidates)
         threshold = random.randint(0, sum((count for _, count in counts)))
         for candidate, count in candidates:
-            print('candidats:', candidate, count)
             threshold -= count
             if threshold <= 0:
                 return candidate
@@ -134,13 +132,11 @@ class NKGram(object):
 
 
 if __name__ == '__main__':
-    text = tuple("les abribus volants sont nos amis")
-
     with open("filin", "r") as f:
-        txt = tuple(f.read().split())
-    order = 3
+        txt = tuple(f.read())
+    order = 10
     g = NKGram(order).learn(txt)
     # print(g.model)
-    print(' '.join(g.generate(200, g.random_lexems[0])))
+    print(''.join(g.generate(1000, g.random_lexems[0])))
 
 
